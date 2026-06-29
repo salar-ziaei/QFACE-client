@@ -25,3 +25,32 @@ QFACE Client is an Electron‑based desktop application that provides a floating
 git clone https://github.com/salar-ziaei/QFACE-client.git
 cd QFACE-client
 npm install
+Configuration
+The app reads settings from qface-config.json (created automatically). You can also adjust the dashboard URL via the Settings window or by editing the file:
+
+json
+{
+  "dashboardUrl": "http://localhost:8080",
+  "faceDetectionProxyUrl": "http://localhost:8080/api/proxy/face_detected",
+  "rotation": 0
+}
+
+Development
+bash
+npm start
+Build
+bash
+npm run build
+The output will be in the dist/ folder (installer for Windows, AppImage for Linux, DMG for macOS).
+
+Usage
+Ensure the QFACE Server is running.
+
+Launch the client – it will automatically detect your session cookie and load the camera stream.
+
+Use the toolbar to open the door, access the dashboard, or toggle settings.
+
+Click the close button (✕) to hide the window to the system tray (right‑click the tray icon to quit).
+
+License
+This project is licensed under the MIT License – see the LICENSE file for details.

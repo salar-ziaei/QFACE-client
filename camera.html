@@ -162,11 +162,6 @@
         streamSrc = url;
         loadStream();
       };
-
-      // Retry every 5s if still offline
-      setInterval(() => {
-        if (offline.classList.contains("show")) loadStream();
-      }, 5000);
     </script>
   </body>
 </html>

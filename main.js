@@ -65,6 +65,7 @@ function loadConfig() {
 
 function saveConfig() {
   try {
+    config.trayMode = trayMode;
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
   } catch (e) {}
 }

@@ -1,0 +1,38 @@
+{
+  "name": "qface-camera-window",
+  "productName": "QFACE Camera",
+  "version": "2.3.0",
+  "description": "QFACE camera window with pinning",
+  "main": "main.js",
+  "author": "QCODE-Salar Ziaie",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "electron-prompt": "^1.6.0"
+  },
+  "build": {
+    "appId": "com.qface.camera",
+    "productName": "QFACE Camera",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icons/icon.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "icons/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icons/icon.icns"
+    }
+  }
+}

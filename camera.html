@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>QFACE Camera</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+      }
+      #stream {
+        min-width: 120px;
+        min-height: 90px;
+        width: auto;
+        height: auto;
+        object-fit: cover;
+        display: block;
+      }
+      #offline {
+        display: none;
+        position: absolute;
+        inset: 0;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: #666;
+        font-family: system-ui, sans-serif;
+        font-size: 14px;
+        gap: 8px;
+      }
+      #offline.show {
+        display: flex;
+      }
+      #offline span {
+        font-size: 32px;
+      }
+    </style>
+  </head>
+  <body>
+    <img id="stream" alt="Camera Feed" />
+    <canvas
+      id="overlay"
+      style="
+        position: fixed;
+        top: 36px;
+        left: 0;
+        width: 100%;
+        height: calc(100% - 36px);
+        pointer-events: none;
+        z-index: 100;
+        display: none;
+      "
+    ></canvas>
+    <div id="offline">
+      <span>📷</span>
+      <p>Camera offline — retrying…</p>
+    </div>
+
+    <script>
+      let streamSrc = null;
+      const img = document.getElementById("stream");
+      const offline = document.getElementById("offline");
+      let retryTimer = null;
+
+      let showCrop = false;
+      let animFrame = null;
+
+      function drawCropOverlay() {
+        const canvas = document.getElementById("overlay");
+        const crop = window.__qface_crop__;
+        if (!canvas || !crop || !crop.crop_region_enabled) {
+          animFrame = requestAnimationFrame(drawCropOverlay);
+          return;
+        }
+
+        const img = document.getElementById("stream");
+        if (!img || img.naturalWidth === 0) {
+          animFrame = requestAnimationFrame(drawCropOverlay);
+          return;
+        }
+
+        // Scale crop coords to actual display size
+        const scaleX = img.clientWidth / img.naturalWidth;
+        const scaleY = img.clientHeight / img.naturalHeight;
+
+        canvas.width = img.clientWidth;
+        canvas.height = img.clientHeight;
+
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const x = crop.crop_x_start * scaleX;
+        const y = crop.crop_y_start * scaleY;
+        const w = (crop.crop_x_end - crop.crop_x_start) * scaleX;
+        const h = (crop.crop_y_end - crop.crop_y_start) * scaleY;
+
+        // Darken outside crop region
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(x, y, w, h);
+
+        // Draw crop box border
+        ctx.strokeStyle = "rgba(99,102,241,0.9)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 3]);
+        ctx.strokeRect(x, y, w, h);
+
+        // Label
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(99,102,241,0.85)";
+        ctx.fillRect(x, y - 18, 90, 18);
+        ctx.fillStyle = "white";
+        ctx.font = "11px system-ui";
+        ctx.fillText("Server Region", x + 4, y - 5);
+
+        animFrame = requestAnimationFrame(drawCropOverlay);
+      }
+
+      window.toggleCropOverlay = (show) => {
+        showCrop = show;
+        const canvas = document.getElementById("overlay");
+        if (show) {
+          canvas.style.display = "block";
+          drawCropOverlay();
+        } else {
+          canvas.style.display = "none";
+          if (animFrame) {
+            cancelAnimationFrame(animFrame);
+            animFrame = null;
+          }
+        }
+      };
+
+      function loadStream() {
+        if (!streamSrc) return;
+        img.src = streamSrc + "?t=" + Date.now();
+      }
+
+      img.onload = () => {
+        offline.classList.remove("show");
+        if (retryTimer) {
+          clearTimeout(retryTimer);
+          retryTimer = null;
+        }
+      };
+
+      img.onerror = () => {
+        offline.classList.add("show");
+        retryTimer = setTimeout(loadStream, 3000);
+      };
+
+      // Called by Electron with the qface://stream URL
+      window.setStreamUrl = (url) => {
+        streamSrc = url;
+        loadStream();
+      };
+
+      // Retry every 5s if still offline
+      setInterval(() => {
+        if (offline.classList.contains("show")) loadStream();
+      }, 5000);
+    </script>
+  </body>
+</html>
